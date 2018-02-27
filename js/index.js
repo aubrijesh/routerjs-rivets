@@ -23,7 +23,11 @@ $(document).ready(function() {
 		template: '#template-first',
 		data: {
 			page_name: "First page",
-			user_list: []
+			user_list: [],
+			isListLoading: false
+		},
+		beforeRender: function() {
+			this.methods.getUserList();
 		},
 		methods: {
 			goToSecond: function() {
@@ -31,6 +35,25 @@ $(document).ready(function() {
 			},
 			newFunction: function() {
 				console.log("new function executed");
+			},
+			getUserList: function() {
+				var self = this;
+				this.data.isListLoading = true;
+				var ajaxSuccess = function(resData) {
+					self.data.user_list  = resData;
+					self.data.isListLoading = false;
+				};
+				var ajaxError = function(error) {
+					console.log("got error during ajax");
+					self.data.isListLoading = false;
+				}
+				$.ajax({
+					url: Config.baseUrl +'users',
+					method: "GET",
+					data: {},
+					success: ajaxSuccess,
+					error: ajaxError
+ 				});
 			}
 		},
 		events: {
@@ -79,6 +102,22 @@ $(document).ready(function() {
 		routes: routes,
 		animations: newAnimations[3],
 		beforeLoadAnimation: false,
+		methods: {
+			goNext: function() {
+				Router.push();
+			},
+			goPrev: function() {
+				Router.pop();
+			}
+		},
+		events: {
+			'click, .next':  function() {
+				this.methods.goNext();
+			},
+			'click, .prev': function() {
+				this.methods.goPrev();
+			}
+		},
 		showLoader: function() {
 			$('.loader').css('display','block');
 		},
@@ -86,12 +125,7 @@ $(document).ready(function() {
 			$('.loader').css('display','none');
 		} 
 	});
-	$('body').on('click','.next', function() {
-		Router.push();
-	});
-	$('body').on('click','.prev', function() {
-		Router.pop();
-	});
+	
 	rivets.formatters.upperCase = function(value) {
 	  return value.toUpperCase();
 	}

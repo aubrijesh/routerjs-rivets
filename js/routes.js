@@ -1,4 +1,4 @@
-(function($, hb, rb) {
+(function($, rb) {
 	initilization = function() {
 		var pushState = history.pushState;
 		rivets.configure({
@@ -105,21 +105,12 @@
 			if(Router.beforeLoadAnimation) {
 				Router.showLoader();
 			}
-
-			/* without timeout animation will not be bind */
-			// if(!Router.currentRoute.renderAlways || !moveToSlider.innerHTML) {
-			// 	if(!moveToSlider.innerHTML) {
-			// 		var source   = $(templateId).html();
-			// 		var template = hb.compile(source);
-			// 		var html  = template(data);
-			// 		moveToSlider.innerHTML = html;
-			// 	}
-			// }
 			rivets.bind(moveToSlider, data);
 
 			if(Router.beforeLoadAnimation) {
 				Router.hideLoader();
 			}
+
 
 			setTimeout(function() {
 				if(Router.currentOperation === "pop") {
@@ -184,10 +175,6 @@
 		},
 		updateTemplate = function() {
 			var currentSlider = document.getElementsByClassName('route-slider')[Router.currentRoute.index];
-			// var source   = $(Router.currentRoute.template).html();
-			// var template = hb.compile(source);
-			// var html  = template(Router.currentRoute.data);
-			// currentSlider.innerHTML = html;
 			rivets.bind(currentSlider, Router.currentRoute.data);
 		}
 	};
@@ -236,7 +223,9 @@
 			});
 			
 			/* bind events */
-			
+			this.events = configuration.events || {};
+			this.methods = configuration.methods || {};
+
 			if(this.currentRoute === '') {
 				this.currentRoute = configuration.routes[0];
 				this.routeTo = configuration.routes[0];
@@ -251,7 +240,40 @@
 				this.hideLoader = configuration.hideLoader;
 			}
 			initilization();
+			/* register route events */
+			if(configuration.events) {
+				for(key in configuration.events) {
+					var keySplit = key.split(",");
+					var target = keySplit[1].trim();
+					var event = keySplit[0].trim();
+					var fun = configuration.events[key];
+					var bindFun = "";
+					if(typeof fun === 'string') {
+						fun = configuration.events[i].methods[fun];
+					}
+					bindFun = fun.bind(this);
+					$('body').on(event,target,bindFun);
+				}
+			}
+
+			/* bind methods */
+			for(var i=0;i<this.routes.length; i++) {
+				var cRoute = this.routes[i];
+				rivets.bind($(cRoute.template), cRoute.data);
+				if(cRoute.methods) {
+					for(key in cRoute.methods) {
+						cRoute.methods[key] = cRoute.methods[key].bind(cRoute);
+					}
+				}
+			}
+			
+
 			this.go('',this.currentRoute.index, this.routeTo.index);
+
+			
+
+			/* bind events */
+
 			for(var i=0;i<this.routes.length; i++) {
 				if(this.routes[i].events) {
 					for(key in this.routes[i].events) {
@@ -263,7 +285,7 @@
 						if(typeof fun === 'string') {
 							fun = this.routes[i].methods[fun];
 						}
-						bindFun = fun.bind(this);
+						bindFun = fun.bind(this.routes[i]);
 						$('body').on(event,target,bindFun);
 					}
 				}
@@ -280,6 +302,11 @@
 			}
 			else {
 				routeObject = this.routes[routeToIndex];
+			}
+
+
+			if(this.routeTo.beforeRender) {
+				this.routeTo.beforeRender();
 			}
 
 			render(this.routeTo.template,$("#route-content"),templateData);
@@ -315,9 +342,6 @@
 			else {
 				console.log("can't pop, no more routes to pop")
 			}
-		},
-		update: function() {
-			updateTemplate();
 		}
 	}
-}(jQuery, Handlebars, rivets));
+}(jQuery, rivets));
