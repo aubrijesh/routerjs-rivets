@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Routes</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="stylesheet" type="text/css" href="css/routes.css">
+		<link rel="stylesheet" type="text/css" href="css/index.css" />
+		<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+	</head>
+	<body>
+		<div id="routes" class="routes">
+			<div class="routes-list">
+				<div class="route-slider">
+					<section class="first-template red">
+						<header>
+							<div class="next">
+								<img src="image/next.png" />
+							</div>
+							<h2>{{page_name}}</h2>
+						</header>
+						<div class="content">
+							<div class="row" rv-each-user="user_list">
+								<div>
+									<h4 style="display: inline-block">First Name</h4>
+									:{{%user%}} {{user.first_name | upperCase}}
+								</div>
+								<div>
+									<h4 style="display: inline-block">Last Name</h4>
+									: {{user.last_name}}
+								</div>
+							</div>
+							<button class="btn-update">Update Data</button>
+						</div>
+					</section>
+				</div>
+				<div class="route-slider">
+					<section class="second-template blue">
+						<header>
+							<div class="next">
+								<img src="image/next.png" />
+							</div>
+							<h2>{{name}}</h2>
+							<div class="prev">
+								<img src="image/back.png" />
+							</div>
+						</header>
+						<div class="content">
+							<h1> Second page</h1>
+							<div class="item">
+								<span class="name">this is for second template</span>
+								<span>{{address}}</span>
+							</div>
+							<p>
+								{{text}}
+							</p>
+						</div>
+					</section>
+				</div>
+				<div class="route-slider">
+					<section class="third-template green">
+						<header>
+							<div class="next">
+								<img src="image/next.png" />
+							</div>
+							<h2>{{name}}</h2>
+							<div class="prev">
+								<img src="image/back.png" />
+							</div>
+						</header>
+						<div class="content">
+							<div class="item">
+								<span class="name">this is for Third template</span>
+								<span>{{address}}</span>
+							</div>
+							<h1>{{name}}</h1>
+							<p>
+							{{text}}
+							</p>
+						</div>
+					</section>
+				</div>
+				<div class="route-slider">
+					<section class="fourth-template gray">
+						<header>
+							<div class="prev">
+								<img src="image/back.png" />
+							</div>
+							<h2>{{name}}</h2>
+						</header>
+						<div class="content">
+							<div class="item">
+								<span class="name">this is for Fourth template</span>
+								<span>{{address}}</span>
+							</div>
+							<p>
+								{{text}}
+							</p>
+							<h1>{{name}}</h1>
+						</div>
+					</section>
+				</div>
+			</div>
+		</div>
+		<div class="loader">
+			<div class="loader-inner">
+				<div class="circular-loading"></div>
+			</div>
+		</div>
+	</body>
+	<script type="text/javascript" src="js/jquery-min.js"></script>
+	<script type="text/javascript" src="js/handlebars-v4.0.10.js"></script>
+	<script type="text/javascript" src="js/rivets.bundled.min.js"></script>
+	<script type="text/javascript" src="js/users.js"></script>
+	<script type="text/javascript" src="js/routes.js"></script>
+	<script type="text/javascript" src="js/config.js"></script>
+	<script type="text/javascript" src="js/index.js"></script>
+</html>
