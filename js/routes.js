@@ -178,6 +178,26 @@
 		}
 		return obj;
 	};
+	bindEvents = function(eventObject, bindToObject) {
+		for(key in eventObject) {
+			var keySplit = key.split(",");
+			var target = keySplit[1].trim();
+			var event = keySplit[0].trim();
+			var fun = eventObject[key];
+			var bindFun = "";
+			if(typeof fun === 'string') {
+				fun = eventObject[i].methods[fun];
+			}
+			bindFun = fun.bind(bindToObject);
+			$('body').on(event,target,bindFun);
+		}
+	};
+	
+	bindMethods = function(methodObject, bindToObject) {
+		for(key in methodObject) {
+			methodObject[key] = methodObject[key].bind(bindToObject);
+		}
+	};
 
 	window.Router =  {
 		routes: [],
@@ -202,7 +222,12 @@
 			var self = this;
 			this.routes = configuration.routes.map(function(obj, index) {
 				obj['index'] = index ; 
-				obj["update"] = self.update
+				obj["update"] = self.update;
+				obj.data["parent_data"] = configuration.data || {};
+				obj["parent"] = self;
+				if(obj["autoRender"] === undefined) {
+					obj["autoRender"] = true
+				}
 				return obj 
 			});
 			
@@ -225,50 +250,31 @@
 			}
 			initilization();
 			/* register route events */
-			if(configuration.events) {
-				for(key in configuration.events) {
-					var keySplit = key.split(",");
-					var target = keySplit[1].trim();
-					var event = keySplit[0].trim();
-					var fun = configuration.events[key];
-					var bindFun = "";
-					if(typeof fun === 'string') {
-						fun = configuration.events[i].methods[fun];
-					}
-					bindFun = fun.bind(this);
-					$('body').on(event,target,bindFun);
-				}
+			if(configuration.methods) {
+				bindMethods(configuration.methods, this);
 			}
-
-			/* bind methods */
+			/* bind events of router*/
+			
+			if(configuration.events) {
+				bindEvents(configuration.events, this);
+			}
+			/* bind methods of routes*/
 			for(var i=0;i<this.routes.length; i++) {
 				var cRoute = this.routes[i];
-				rivets.bind($(cRoute.template), cRoute.data);
 				if(cRoute.methods) {
-					for(key in cRoute.methods) {
-						cRoute.methods[key] = cRoute.methods[key].bind(cRoute);
-					}
+					bindMethods(cRoute.methods, cRoute);
 				}
 			}
-			
 			this.go('',this.currentRoute.index, this.routeTo.index);
-
-			/* bind events */
-
 			for(var i=0;i<this.routes.length; i++) {
 				if(this.routes[i].events) {
-					for(key in this.routes[i].events) {
-						var keySplit = key.split(",");
-						var target = keySplit[1].trim();
-						var event = keySplit[0].trim();
-						var fun = this.routes[i].events[key];
-						var bindFun = "";
-						if(typeof fun === 'string') {
-							fun = this.routes[i].methods[fun];
-						}
-						bindFun = fun.bind(this.routes[i]);
-						$('body').on(event,target,bindFun);
-					}
+					bindEvents(this.routes[i].events, this.routes[i]);
+				}
+				if(this.routes[i].beforeRender) {
+					this.routes[i].beforeRender.bind(this.routes[i]);
+				}
+				if(this.routes[i].afterRender) {
+					this.routes[i].afterRender.bind(this.routes[i]);
 				}
 			}
 		},
