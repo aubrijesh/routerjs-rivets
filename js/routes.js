@@ -29,28 +29,26 @@
 		  executeFunctions: false
 
 		});
-
-		/* 
-			Added By: Brijesh Kumar
-			Date: 17/05/2017
-			Description: For creating route-containers for each route 
-			where route template will be rendered
-		*/
-		// createElements = function() {
-		// 	var routerLen = Router.routes.length;
-		// 	for(var i=0;i<Router.routes.length; i++) {
-		// 		var newElmement = document.createElement('div');
-		// 		var $routes = document.getElementsByClassName('routes-list')[0];
-		// 		newElmement.className = 'route-slider';
-		// 		// newElmement.setAttribute('data-route-index',i);
-		// 		// newElmement.style.zIndex = (routerLen - i);
-		// 		$routes.appendChild(newElmement);
-		// 	}
-		// };
-		// createElements();
+		Array.prototype.diff = function(a) {
+		    return this.filter(function(i) {return a.indexOf(i) < 0;});
+		};
+		getRouteSlideByIndex = function(index) {
+			return document.getElementsByClassName('route-slider')[index];
+		};
+		$.fn.removeClassExceptThese = function(classList) {
+			var $elem = $(this);
+			if($elem.length > 0) {
+				var existingClassList = $elem.attr("class").split(' ');
+				var classListToRemove = existingClassList.diff(classList);
+				$elem
+					.removeClass(classListToRemove.join(" "))
+					.addClass(classList.join(" "));
+			}
+			return $elem;
+		};
 		whichTransitionEvent = function(){
 		  var t,
-		      el = document.createElement("fakeelement");
+		    el = document.createElement("fakeelement");
 
 		  var transitions = {
 		    "transition"      : "transitionend",
@@ -64,6 +62,7 @@
 		      return transitions[t];
 		    }
 		  }
+
 		};
 
 		/* 
@@ -72,16 +71,15 @@
 			Descriptio: For rendering template using hanlderbar templating system
 		*/
 
-		render = function(templateId, el, data) {
-			var allSlider = document.getElementsByClassName('route-slider slide');
-			var moveToSlider = document.getElementsByClassName('route-slider')[Router.routeTo.index];
-			var currentSlider = document.getElementsByClassName('route-slider')[Router.currentRoute.index];
+		render = function(templateElement, el, data) {
+			var moveToSlider = getRouteSlideByIndex(Router.routeTo.index);
+			var currentSlider = getRouteSlideByIndex(Router.currentRoute.index);
+			var moveToSliderContainer = moveToSlider.getElementsByClassName('route-slider-container');
 			
 			var previousRouteIndex = -1;
 			var nextRouteIndex = -1;
 			
-			if(Router.routeTo.index > 0)
-			{
+			if(Router.routeTo.index > 0) {
 				previousRouteIndex = (Router.routeTo.index - 1)
 			}
 
@@ -89,10 +87,7 @@
 				nextRouteIndex = (Router.routeTo.index + 1)
 			}
 
-
-			if(!Router.activeAnimaion) {
-				Router.activeAnimaion = Router.animations.push;
-			}
+			Router.activeAnimaion = Router.activeAnimaion || Router.animations.push;
 			
 			if(Router.currentOperation === "pop") {
 				$(currentSlider).addClass(Router.activeAnimaion);
@@ -101,77 +96,66 @@
 				$(moveToSlider).addClass(Router.activeAnimaion);
 			}
 
-			
 			if(Router.beforeLoadAnimation) {
 				Router.showLoader();
 			}
-			rivets.bind(moveToSlider, data);
 
+			rivets.bind(moveToSlider, data);
+			
 			if(Router.beforeLoadAnimation) {
 				Router.hideLoader();
 			}
 
-
 			setTimeout(function() {
+				var $moveToSliderPrev = $(moveToSlider).prev();
+				var $moveToSliderNext = $(moveToSlider).next();
+
 				if(Router.currentOperation === "pop") {
 					$(currentSlider)
+						.addClass("animating")
 						.removeClass("current-slider")
 						.addClass("slide");
-
 					$(currentSlider).one(whichTransitionEvent(),
 						function(event) {
-					    if(nextRouteIndex > -1) {
-							$(moveToSlider)
-								.next()
-								.attr("class", "route-slider next-slider")
-								.nextAll()
-								.attr('class','route-slider');
-						}
-						if(previousRouteIndex > -1)
-						{
-							$(moveToSlider)
-								.prev()
-								.attr("class", "route-slider prev-slider")
-								.prevAll()
-								.attr('class','route-slider');
-						}
-						$(moveToSlider)
-							.attr("class", "route-slider current-slider");
+							afterAnimationEnd($(currentSlider));					
 					});
 				} else {
+					$moveToSliderPrev
+						.addClass("prev-animation");
+
 					$(moveToSlider)
-							.prev()
-							.addClass("prev-animation");
-							
-					$(moveToSlider)
+						.addClass("animating")
 						.removeClass("next-slider")
 						.addClass("slide");
 
 					$(moveToSlider).one(whichTransitionEvent(),
 						function(event) {
-						if(nextRouteIndex > -1) {
-							$(moveToSlider)
-								.next()
-								.attr("class", "route-slider next-slider")
-								.nextAll()
-								.attr('class','route-slider');
-						}
-						if(previousRouteIndex > -1)
-						{
-							$(moveToSlider)
-								.removeClass("prev-slider")
-								.prev()
-								.attr("class", "route-slider prev-slider")
-								.prevAll()
-								.attr('class','route-slider');
-						}
-
-						$(moveToSlider)
-							.attr("class", "route-slider current-slider");
+						afterAnimationEnd($(moveToSlider));
 					});
 				}
 
-			},200);
+				function afterAnimationEnd($actingElement) {
+					$actingElement.removeClass("animating");
+
+					$moveToSliderNext
+						.removeClassExceptThese(["route-slider","next-slider"])
+						.nextAll()
+						.removeClassExceptThese(["route-slider"]);
+
+					if(Router.currentOperation === "push") {
+						$(moveToSlider)
+							.removeClass("prev-slider");
+					}
+					
+					$moveToSliderPrev
+						.removeClassExceptThese(["route-slider","prev-slider"])
+						.prevAll()
+						.removeClassExceptThese(["route-slider"]);
+
+					$(moveToSlider)
+						.removeClassExceptThese(["route-slider","current-slider"]);
+				}
+			},0);
 		},
 		updateTemplate = function() {
 			var currentSlider = document.getElementsByClassName('route-slider')[Router.currentRoute.index];
@@ -267,10 +251,7 @@
 				}
 			}
 			
-
 			this.go('',this.currentRoute.index, this.routeTo.index);
-
-			
 
 			/* bind events */
 
@@ -293,7 +274,6 @@
 		},
 		go: function(routeName, currentRouteIndex, routeToIndex) {
 			var routeObject = '';
-			var templateData = this.routeTo.data;
 			if(this.currentOperation == "") {
 				this.currentOperation = "push";
 			}
@@ -303,17 +283,14 @@
 			else {
 				routeObject = this.routes[routeToIndex];
 			}
-
-
 			if(this.routeTo.beforeRender) {
 				this.routeTo.beforeRender();
 			}
-
-			render(this.routeTo.template,$("#route-content"),templateData);
+			render(this.routeTo.template,$("#route-content"),this.routeTo.data);
+			if(this.routeTo.afterRender) {
+				this.routeTo.afterRender();
+			}
 			this.currentRoute = this.routeTo;
-			// if(routeObject !== '') {
-			// 	history.pushState(null,null,"#"+routeObject.name);
-			// }
 		},
 		push: function() {
 			var currentRouteIndex = $(".route-slider.current-slider").index();
